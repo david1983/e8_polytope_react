@@ -4,7 +4,7 @@ import './App.css';
 import {observable} from "mobx"
 import {observer} from "mobx-react"
 
-// Coordinates of the roots (these are fixed):
+// Coordinates of the roots
 var roots = new Array();
 
 var canvas0, canvas1, ctx0, ctx1, candiv
@@ -219,6 +219,7 @@ var rootColor = new Array();  // Root colors (RGB coordinates)
 
 function computeProjections() {
   for (var n = 0; n < roots.length; n++) {
+    // compute projections and resize by 100 and translated by 300
     rootProj[n] = [dotprod(projMatrix[0], roots[n]) * 100 + 300,
     dotprod(projMatrix[1], roots[n]) * 100 + 300];
   }
