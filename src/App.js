@@ -392,9 +392,10 @@ class App extends Component {
             {roots.length} vertices {"\n"}
             8 dimensions {"\n"} {"\n"}
 
-            (made by Davide Andreazzini) {"\n"}{"\n"}
+            made by Davide Andreazzini {"\n"}
+            andreazzini.davide@gmail.com{"\n"}{"\n"}
             Orthogonal plane coordinates {"\n"}
-            x: {JSON.stringify(projMatrix.toJS()[0], "","\t")}
+            x: {JSON.stringify(projMatrix.toJS()[0], "","\t")}{"\n"}
             y: {JSON.stringify(projMatrix.toJS()[1], "","\t")}
             </pre>
             
