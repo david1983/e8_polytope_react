@@ -388,7 +388,8 @@ class App extends Component {
         <div style={{position: "absolute", top: "0" }}>
             <pre className="mypre" style={{padding: "1em", wordBreak:"break-word", whiteSpace:"pre-wrap"}}>
             E8 polytope or Gosset 4_21 {"\n"}
-            orthogonal planes {"\n"}
+            (made by Davide Andreazzini) {"\n"}{"\n"}
+            Orthogonal planes {"\n"}
             x: {JSON.stringify(projMatrix.toJS()[0], "","\t")}
             y: {JSON.stringify(projMatrix.toJS()[1], "","\t")}
             </pre>
