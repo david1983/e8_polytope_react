@@ -1,15 +1,19 @@
 import React, { Component } from 'react';
 import './App.css';
 
-import {observable} from "mobx"
-import {observer} from "mobx-react"
+import { observable } from "mobx"
+import { observer } from "mobx-react"
 
 // Coordinates of the roots
 var roots = new Array();
 
 var canvas0, canvas1, ctx0, ctx1, candiv
-const width = 600;
-const height = 600;
+const width = window.innerWidth;
+const height = window.innerHeight;
+var zoom = 100
+var translateX = width / 2
+var translateY = height / 2
+
 
 function createRoots() {
   function rootFirstKind(i0, i1, s0, s1) {
@@ -205,6 +209,12 @@ function changeProjectionRandom() {
   gramSchmidt();
 }
 
+function customHyperPlane(x, y) {
+  projMatrix[0] = x
+  projMatrix[1] = y
+  gramSchmidt(0)
+}
+
 function rotate(rotationMatrix) {
   for (var k = 0; k < 8; k++) {
     projMatrix[0][k] += rotationMatrix[k];
@@ -220,8 +230,8 @@ var rootColor = new Array();  // Root colors (RGB coordinates)
 function computeProjections() {
   for (var n = 0; n < roots.length; n++) {
     // compute projections and resize by 100 and translated by 300
-    rootProj[n] = [dotprod(projMatrix[0], roots[n]) * 100 + 300,
-    dotprod(projMatrix[1], roots[n]) * 100 + 300];
+    rootProj[n] = [dotprod(projMatrix[0], roots[n]) * zoom + translateX,
+    dotprod(projMatrix[1], roots[n]) * zoom + translateY];
   }
 }
 
@@ -288,8 +298,8 @@ function drawPoints() {  // Draw points using first color scheme.
 
 
 function clearCanvas() {
-  ctx1.clearRect(0, 0, 600, 600);
-  ctx0.clearRect(0, 0, 600, 600);
+  ctx1.clearRect(0, 0, width, height);
+  ctx0.clearRect(0, 0, width, height);
 }
 
 
@@ -333,9 +343,31 @@ function onLoad() {
   createRoots();
   createAdjacent();
   chooseProjection30()
-  runInterval([...Array(8).keys()].map(i => rand(-speed, speed)))
-
+  paint()
+  runInterval()
 }
+
+function paint() {
+  clearCanvas()
+  computeProjections()
+  computeColors();
+  computeDotSizes();
+  initPerm();
+  clearCanvas()
+  drawLines();
+  drawPoints();
+}
+
+var keys = {}
+var playerspeed = 1
+document.addEventListener("keydown", (e) => {
+  keys[e.code] = "down"
+})
+
+document.addEventListener("keyup", (e) => {
+  keys[e.code] = "up"
+})
+
 
 function rand(min, max) {
   return Math.random() * (max - min) + min;
@@ -343,21 +375,26 @@ function rand(min, max) {
 
 function runInterval(rotateMatrix) {
   intervalId = setInterval(function () {
-    const lastProj = JSON.parse(JSON.stringify(rootProj)).map(i => i.map(Math.floor))
-    rotate(rotateMatrix)
-    computeProjections();
-    const newProj = JSON.parse(JSON.stringify(rootProj)).map(i => i.map(Math.floor))
-    if (JSON.stringify(lastProj) == JSON.stringify(newProj)) {
-      clearInterval(intervalId)
-      runInterval([...Array(8).keys()].map(i => rand(-speed, speed)))
-      return
+
+    if (keys["ArrowLeft"] == "down") translateX += playerspeed * 10
+    if (keys["ArrowRight"] == "down") translateX -= playerspeed * 10
+    if (keys["ArrowUp"] == "down") translateY += playerspeed * 10
+    if (keys["ArrowDown"] == "down") translateY -= playerspeed * 10
+    if (keys["KeyQ"] == "down") zoom += playerspeed
+    if (keys["KeyA"] == "down") zoom -= playerspeed
+
+    if (rotateMatrix) {
+      const lastProj = JSON.parse(JSON.stringify(rootProj)).map(i => i.map(Math.floor))
+      rotate(rotateMatrix)
+      computeProjections();
+      const newProj = JSON.parse(JSON.stringify(rootProj)).map(i => i.map(Math.floor))
+      if (JSON.stringify(lastProj) == JSON.stringify(newProj)) {
+        clearInterval(intervalId)
+        runInterval([...Array(8).keys()].map(i => rand(-speed, speed)))
+        return
+      }
     }
-    computeColors();
-    computeDotSizes();
-    initPerm();
-    clearCanvas()
-    drawLines();
-    drawPoints();
+    paint()
   }, 60)
 
 }
@@ -366,6 +403,11 @@ function runInterval(rotateMatrix) {
 class App extends Component {
   constructor(props) {
     super(props)
+    this.state = {
+      x: [2-4/Math.sqrt(3), 0, 1-1/Math.sqrt(3), 1-1/Math.sqrt(3), 0, -1, 1, 0],
+      y: [0, -2+4/Math.sqrt(3), -1+1/Math.sqrt(3), 1-1/Math.sqrt(3), 0, 1/Math.sqrt(3), 1/Math.sqrt(3), -2/Math.sqrt(3)]
+
+    }
   }
 
   componentDidMount() {
@@ -376,30 +418,69 @@ class App extends Component {
 
     return (
       <div className="App">
-        <div style={{ 
+        <div style={{
           display: "flex",
           alignItems: "center",
           flexDirection: "column"
-         }}>
-          <div id="candiv" style={{ position: "relative", width: "600px", height: "600px" }}>
-            <canvas id="canvas0" style={{ position: "absolute", left:0 }} />
-            <canvas id="canvas1" style={{ position: "absolute", left:0 }} />
+        }}>
+          <div id="candiv" style={{ position: "relative", width: "100%", height: "100%" }}>
+            <canvas id="canvas0" style={{ position: "absolute", left: 0 }} />
+            <canvas id="canvas1" style={{ position: "absolute", left: 0 }} />
           </div>
         </div>
-        <div style={{position: "absolute", top: "0" }}>
-            <pre className="mypre" style={{padding: "1em", wordBreak:"break-word", whiteSpace:"pre-wrap"}}>
+        <div style={{ position: "absolute", top: "0" }}>
+          <pre className="mypre" style={{ padding: "1em", wordBreak: "break-word", whiteSpace: "pre-wrap" }}>
             E8, Gosset 4_21 polytope {"\n"}
             {roots.length} vertices {"\n"}
-            8 dimensions {"\n"} {"\n"}
+            8 dimensions {"\n\n"}
 
             made by Davide Andreazzini {"\n"}
-            andreazzini.davide@gmail.com{"\n"}{"\n"}
+            andreazzini.davide@gmail.com{"\n\n"}
+
+            Use the Arrow Keys to navigate{"\n"}
+            Use Q and A to zoom in and out{"\n\n"}
             Orthogonal plane coordinates {"\n"}
-            x: {JSON.stringify(projMatrix.toJS()[0], "","\t")}{"\n"}
-            y: {JSON.stringify(projMatrix.toJS()[1], "","\t")}
-            </pre>
-            
-          </div>
+            x: {JSON.stringify(projMatrix.toJS()[0], "", "\t")}{"\n"}
+            y: {JSON.stringify(projMatrix.toJS()[1], "", "\t")}
+          </pre>
+        </div>
+        <div style={{ position: "absolute", right: 0 }}>
+          <button onClick={() => {
+            runInterval([...Array(8).keys()].map(i => rand(-speed, speed)))
+          }}>start</button>
+          <button onClick={() => {
+            clearInterval(intervalId)
+          }}>stop</button>
+          <br />
+          <button onClick={() => {
+            chooseProjection30()
+          }}>E8 coxeter plane (Petrie)</button>
+          <br />
+
+          <input type="text" 
+          value={JSON.stringify(this.state.x)}
+          onChange={e => {
+            e.stopPropagation()
+            e.preventDefault()
+            this.setState({ x: JSON.parse(e.target.value) })
+          
+          }} /><br />
+          <input type="text" 
+          value={JSON.stringify(this.state.y)}
+          onChange={e => {
+            e.stopPropagation()
+            e.preventDefault()
+            console.log(e.target.value)
+            this.setState({ y: JSON.parse(e.target.value) })
+          }} /><br />
+          <button onClick={() => {
+            console.log(this.state)
+            customHyperPlane(this.state.x, this.state.y)
+          }}>custom hyperplane</button>
+
+        </div>
+
+
       </div>
     );
   }
