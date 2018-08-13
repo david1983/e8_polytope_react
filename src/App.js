@@ -373,15 +373,18 @@ function rand(min, max) {
   return Math.random() * (max - min) + min;
 }
 
+var inputOn = false
 function runInterval(rotateMatrix) {
   intervalId = setInterval(function () {
+    if (!inputOn) {
+      if (keys["ArrowLeft"] == "down") translateX += playerspeed * 10
+      if (keys["ArrowRight"] == "down") translateX -= playerspeed * 10
+      if (keys["ArrowUp"] == "down") translateY += playerspeed * 10
+      if (keys["ArrowDown"] == "down") translateY -= playerspeed * 10
+      if (keys["KeyQ"] == "down") zoom += playerspeed
+      if (keys["KeyA"] == "down") zoom -= playerspeed
 
-    if (keys["ArrowLeft"] == "down") translateX += playerspeed * 10
-    if (keys["ArrowRight"] == "down") translateX -= playerspeed * 10
-    if (keys["ArrowUp"] == "down") translateY += playerspeed * 10
-    if (keys["ArrowDown"] == "down") translateY -= playerspeed * 10
-    if (keys["KeyQ"] == "down") zoom += playerspeed
-    if (keys["KeyA"] == "down") zoom -= playerspeed
+    }
 
     if (rotateMatrix) {
       const lastProj = JSON.parse(JSON.stringify(rootProj)).map(i => i.map(Math.floor))
@@ -403,9 +406,12 @@ function runInterval(rotateMatrix) {
 class App extends Component {
   constructor(props) {
     super(props)
+    this.x = JSON.stringify([2 - 4 / Math.sqrt(3), 0, 1 - 1 / Math.sqrt(3), 1 - 1 / Math.sqrt(3), 0, -1, 1, 0])
+    this.y = JSON.stringify([0, -2 + 4 / Math.sqrt(3), -1 + 1 / Math.sqrt(3), 1 - 1 / Math.sqrt(3), 0, 1 / Math.sqrt(3), 1 / Math.sqrt(3), -2 / Math.sqrt(3)])
+
     this.state = {
-      x: [2-4/Math.sqrt(3), 0, 1-1/Math.sqrt(3), 1-1/Math.sqrt(3), 0, -1, 1, 0],
-      y: [0, -2+4/Math.sqrt(3), -1+1/Math.sqrt(3), 1-1/Math.sqrt(3), 0, 1/Math.sqrt(3), 1/Math.sqrt(3), -2/Math.sqrt(3)]
+      xtemp: "",
+      ytemp: ""
 
     }
   }
@@ -457,25 +463,28 @@ class App extends Component {
           }}>E8 coxeter plane (Petrie)</button>
           <br />
 
-          <input type="text" 
-          value={JSON.stringify(this.state.x)}
-          onChange={e => {
-            e.stopPropagation()
-            e.preventDefault()
-            this.setState({ x: JSON.parse(e.target.value) })
-          
-          }} /><br />
-          <input type="text" 
-          value={JSON.stringify(this.state.y)}
-          onChange={e => {
-            e.stopPropagation()
-            e.preventDefault()
-            console.log(e.target.value)
-            this.setState({ y: JSON.parse(e.target.value) })
-          }} /><br />
+          <input type="text"
+            onKeyDown={() => (inputOn = true)}
+            onKeyUp={() => (inputOn = false)}
+
+            onChange={e => {
+
+              this.setState({ xtemp: e.target.value })
+
+            }} /><br />
+          <input type="text"
+            onKeyDown={() => (inputOn = true)}
+            onKeyUp={() => (inputOn = false)}
+
+            onChange={e => {
+
+              this.setState({ ytemp: e.target.value })
+            }} /><br />
           <button onClick={() => {
             console.log(this.state)
-            customHyperPlane(this.state.x, this.state.y)
+            const x = JSON.parse(this.state.xtemp) || this.x
+            const y = JSON.parse(this.state.ytemp) || this.y
+            customHyperPlane(x, y)
           }}>custom hyperplane</button>
 
         </div>
